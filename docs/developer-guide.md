@@ -1,16 +1,16 @@
 
-# Developer Guide
+# WalletFlow — Developer Guide
 
-This guide explains how to set up WalletFlow locally, understand its project structure, and make changes safely.
+This guide explains how to set up WalletFlow locally, understand its current repository structure, and follow a consistent development workflow.
 
 ## 1. Prerequisites
 
 Before starting, make sure you have:
 
-- Node.js installed
-- npm installed
-- Git installed
-- A code editor such as Visual Studio Code
+- Node.js installed (Node.js 20 LTS recommended).
+- npm installed.
+- Git installed.
+- A code editor such as Visual Studio Code.
 
 Check your installations:
 
@@ -25,7 +25,7 @@ git --version
 Clone the WalletFlow repository:
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
+git clone https://github.com/stolencenturies/WalletFlow.git
 ```
 
 Navigate into the project:
@@ -58,47 +58,72 @@ Open that URL in your browser.
 
 ## 4. Available Scripts
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Starts the development server |
-| `npm run lint` | Runs ESLint checks |
-| `npm run build` | Creates the production build |
-| `npm run preview` | Previews the production build locally |
-
 Run these commands from the project root.
 
-## 5. Project Structure
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Starts the Vite development server |
+| `npm run lint` | Runs ESLint checks |
+| `npm run build` | Runs the TypeScript project build and Vite production build |
+| `npm run preview` | Previews the production build locally |
 
-The project is organized around the React application, reusable components, styling, and supporting documentation.
+## 5. Current Project Structure
+
+The current repository uses a relatively compact frontend structure. Most application interface and interaction logic is located in `src/App.tsx`, while supporting data utilities and shared types are maintained in separate files.
 
 ```text
 WalletFlow/
 ├── public/
 │   └── images/
+│       ├── dashboard.png
+│       ├── assets.png
+│       ├── transactions.png
+│       └── wallet-connection.png
 ├── docs/
 │   ├── architecture.md
 │   ├── data-flow.md
 │   ├── technical-decisions.md
 │   ├── testing.md
-│   └── developer-guide.md
+│   ├── developer-guide.md
+│   └── engineering-case-study.md
 ├── src/
-│   ├── components/
 │   ├── App.tsx
 │   ├── App.css
-│   └── main.tsx
+│   ├── data.ts
+│   ├── index.css
+│   ├── main.tsx
+│   ├── types.ts
+│   └── vite-env.d.ts
+├── .gitignore
+├── eslint.config.js
 ├── index.html
 ├── package.json
+├── package-lock.json
+├── tsconfig.app.json
 ├── tsconfig.json
+├── tsconfig.node.json
 └── vite.config.ts
 ```
 
-This is a high-level overview. Your actual repository may contain additional files and folders.
+### Important source files
+
+| File | Responsibility |
+|---|---|
+| `src/App.tsx` | Main application interface, state management, interactions, and wallet integration |
+| `src/data.ts` | Initial demonstration data, portfolio calculations, formatting, and chart-data utilities |
+| `src/types.ts` | Shared TypeScript data types |
+| `src/main.tsx` | React application entry point |
+| `src/App.css` | Main application styling |
+| `src/index.css` | Global styling |
+| `package.json` | Dependencies and development scripts |
+
+The architecture is intentionally compact. The current implementation does not contain a separate components, hooks, or services directory. Those could be introduced as future refactoring work.
 
 ## 6. Development Workflow
 
 When making a change:
 
-1. Understand the existing component or feature.
+1. Understand the existing feature and relevant source files.
 2. Make a focused change.
 3. Run the development server.
 4. Test the affected functionality in the browser.
@@ -109,6 +134,7 @@ When making a change:
 Useful commands:
 
 ```bash
+npm run dev
 npm run lint
 npm run build
 ```
@@ -119,6 +145,12 @@ Review changed files:
 
 ```bash
 git status
+```
+
+Review the actual changes:
+
+```bash
+git diff
 ```
 
 Stage your changes:
@@ -136,7 +168,7 @@ git commit -m "Describe your changes"
 Push to GitHub:
 
 ```bash
-git push
+git push origin main
 ```
 
 Use clear commit messages that describe the work completed.
@@ -144,35 +176,42 @@ Use clear commit messages that describe the work completed.
 ## 8. Coding Guidelines
 
 - Use TypeScript for application logic.
-- Prefer reusable React components.
-- Keep component responsibilities clear.
-- Use descriptive variable and function names.
+- Prefer clear and reusable functions.
+- Keep variable and function names descriptive.
 - Handle invalid inputs and unexpected errors.
-- Preserve responsive behavior.
+- Preserve responsive behaviour.
 - Avoid duplicating existing functionality.
-- Keep demo and wallet functionality clearly separated.
+- Keep demonstration portfolio data separate from wallet information.
+- Document important technical decisions.
+- Test affected functionality before committing changes.
+
+As the application grows, consider separating major responsibilities into dedicated components, hooks, services, and utility modules.
 
 ## 9. Wallet Safety
 
 WalletFlow is an educational frontend demonstration.
 
-- Wallet connection is intended to be read-only.
+- Wallet connection can require user approval for account access.
+- The application is designed to retrieve selected wallet information without transaction signing.
 - Do not add private-key collection or storage.
-- Do not request users' seed phrases.
+- Do not request users' seed phrases or recovery phrases.
 - Do not imply that simulated transactions transfer real funds.
-- Keep wallet-related permissions and behavior transparent.
+- Keep wallet-related permissions and behaviour transparent.
+
+Read-only wallet connectivity does not mean that the application requires no wallet permission. Account access is subject to the wallet provider's approval.
 
 ## 10. Before Submitting Changes
 
 Review this checklist:
 
-- [x] The application starts successfully.
-- [x] The affected feature works.
-- [x] The responsive layout remains usable.
-- [x] No unexpected browser-console errors appear.
-- [x] ESLint passes.
-- [x] The production build succeeds.
-- [x] Documentation is updated when necessary.
+- [ ] The application starts successfully.
+- [ ] The affected feature works.
+- [ ] The responsive layout remains usable.
+- [ ] No unexpected browser-console errors appear.
+- [ ] ESLint passes.
+- [ ] The production build succeeds.
+- [ ] Documentation is updated when necessary.
+- [ ] The final Git diff has been reviewed.
 
 ---
 

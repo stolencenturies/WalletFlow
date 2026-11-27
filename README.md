@@ -16,19 +16,15 @@ WalletFlow is a responsive fintech-inspired cryptocurrency portfolio dashboard d
 ## Preview
 
 ### Dashboard
-
 ![WalletFlow Dashboard](public/images/dashboard.png)
 
 ### My Assets
-
 ![WalletFlow Assets](public/images/assets.png)
 
 ### Transaction History
-
 ![WalletFlow Transactions](public/images/transactions.png)
 
 ### Wallet Connection
-
 ![WalletFlow Wallet Connection](public/images/wallet-connection.png)
 
 ---
@@ -38,29 +34,30 @@ WalletFlow is a responsive fintech-inspired cryptocurrency portfolio dashboard d
 ### Portfolio Dashboard
 - Dark, responsive fintech-inspired interface.
 - Portfolio value and asset allocation overview.
-- Interactive portfolio performance chart with selectable time ranges.
+- Interactive portfolio chart with selectable display ranges.
 - Balance visibility toggle.
-- Overview of assets, recent activity, and wallet status.
+- Overview of assets, activity, and wallet status.
 
 ### Asset Management
-- Demo holdings for Ethereum (ETH), Bitcoin (BTC), and USD Coin (USDC).
+- Demonstration holdings for Ethereum (ETH), Bitcoin (BTC), and USD Coin (USDC).
 - Asset prices and portfolio valuation using illustrative data.
 - Locally persisted demo portfolio changes.
 
 ### Transaction Management
 - Simulated Send, Receive, Swap, and Buy actions.
 - Transaction history with search and filtering.
-- Delete individual demo transactions.
+- Delete individual demo transaction records.
 - Clear transaction history.
 - Export transaction history as CSV.
-- Local browser persistence for demo records.
+- Local browser persistence for supported demo records.
 
 ### Wallet Connectivity
-- Optional MetaMask connection through the browser wallet provider.
-- Read-only wallet information.
+- Optional connection to an injected browser wallet provider, such as MetaMask.
+- Account access request through the wallet provider.
 - Native ETH balance retrieval.
-- Wallet account and network change synchronization.
+- Account and network change event handling.
 - Wallet connection status and error handling.
+- No transaction signing or blockchain transaction execution.
 
 ### User Experience
 - Responsive sidebar navigation.
@@ -83,21 +80,22 @@ WalletFlow is a responsive fintech-inspired cryptocurrency portfolio dashboard d
 | ethers.js | Wallet and blockchain data interaction |
 | Lucide React | Icons |
 | localStorage | Local demo data persistence |
-| MetaMask | Optional read-only wallet connection |
+| MetaMask | Example injected browser wallet provider |
 
 ---
 
 ## Documentation
 
-WalletFlow includes technical documentation covering its architecture, application data flows, engineering decisions, testing process, and developer setup.
+WalletFlow includes technical documentation covering its architecture, data flows, engineering decisions, testing process, developer setup, and implementation.
 
 | Document | Description |
 |---|---|
-| [Architecture](docs/architecture.md) | Application structure, layers, and system architecture |
+| [Architecture](docs/architecture.md) | Application structure, logical layers, and system architecture |
 | [Data Flow](docs/data-flow.md) | Portfolio, transaction, and wallet data flows |
 | [Technical Decisions](docs/technical-decisions.md) | Technology choices, trade-offs, and design decisions |
-| [Testing & Quality Assurance](docs/testing.md) | Verification commands and manual testing checklist |
+| [Testing & Quality Assurance](docs/testing.md) | Verification commands, testing scope, and manual checklist |
 | [Developer Guide](docs/developer-guide.md) | Installation, development workflow, and contribution guidelines |
+| [Engineering Case Study](docs/engineering-case-study.md) | Detailed report covering architecture, implementation, testing, security, and deployment |
 
 ---
 
@@ -114,7 +112,7 @@ WalletFlow includes technical documentation covering its architecture, applicati
 **1. Clone the repository**
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
+git clone https://github.com/stolencenturies/WalletFlow.git
 ```
 
 **2. Navigate into the project directory**
@@ -149,8 +147,8 @@ http://localhost:5173
 |---|---|
 | `npm run dev` | Start the development server |
 | `npm run lint` | Run ESLint checks |
-| `npm run build` | Create a production build |
-| `npm run preview` | Preview the production build |
+| `npm run build` | Run TypeScript project build and create the Vite production build |
+| `npm run preview` | Preview the production build locally |
 
 ### Production Verification
 
@@ -177,7 +175,8 @@ WalletFlow/
 │   ├── data-flow.md
 │   ├── technical-decisions.md
 │   ├── testing.md
-│   └── developer-guide.md
+│   ├── developer-guide.md
+│   └── engineering-case-study.md
 ├── src/
 │   ├── App.tsx
 │   ├── App.css
@@ -206,7 +205,10 @@ WalletFlow is deployed on Vercel.
 **Live Application:**  
 https://wallet-flow-lovat.vercel.app/
 
-The GitHub repository is connected to Vercel for automated deployments when changes are pushed to the production branch.
+**GitHub Repository:**  
+https://github.com/stolencenturies/WalletFlow
+
+The repository is connected to Vercel for deployment when changes are pushed to the configured production branch.
 
 ---
 
@@ -214,11 +216,13 @@ The GitHub repository is connected to Vercel for automated deployments when chan
 
 WalletFlow is an educational frontend portfolio project, not a production cryptocurrency wallet or financial service.
 
-- Portfolio prices and chart performance are illustrative demo data.
+- Portfolio prices and chart values are illustrative demo data.
+- The portfolio chart does not represent verified historical market performance.
 - Send, Receive, Swap, and Buy actions are simulations.
 - Demo transactions do not transfer actual funds.
-- MetaMask connectivity is read-only and retrieves publicly available wallet information.
-- WalletFlow does not request transaction signatures or execute blockchain transactions.
+- The optional wallet integration retrieves selected account and network information through a browser wallet provider.
+- Connecting a wallet may require the user to approve account access.
+- The application does not request transaction signatures or execute blockchain transactions.
 - Demo portfolio records are stored locally in the browser.
 
 Never send cryptocurrency to placeholder addresses displayed by the application.
@@ -230,9 +234,11 @@ Never send cryptocurrency to placeholder addresses displayed by the application.
 Potential areas for future development:
 
 - Expanded portfolio analytics.
+- Live market data integration.
 - More detailed asset information.
 - Improved accessibility.
-- Expanded automated testing.
+- Automated testing.
+- More comprehensive wallet-provider testing.
 - Further performance optimization.
 
 ---

@@ -23,7 +23,7 @@ WalletFlow is a frontend-focused Web3 portfolio dashboard developed using React,
 
 This engineering case study documents the design and implementation approach behind WalletFlow. It examines the application's frontend architecture, technology selection, state management, local persistence, wallet-provider integration, validation, testing practices, and production deployment.
 
-A central design consideration is the separation of portfolio simulation from blockchain interaction. While users can explore simulated financial operations within the application, wallet connectivity is intended for reading publicly available account and network information rather than authorizing or executing transactions.
+A central design consideration is the separation of portfolio simulation from blockchain interaction. Users can explore simulated financial operations within the application, while the optional browser-wallet integration retrieves selected accounts, network, and native-balance information. Account access may require explicit approval through the wallet provider. The application does not request transaction signatures or execute blockchain transactions.
 
 The report also discusses architectural trade-offs, implementation limitations, and lessons that developers can apply when building similar frontend applications.
 
@@ -261,7 +261,7 @@ Its architecture can be understood through five logical areas:
 4. Browser persistence layer
 5. External wallet-provider integration
 
-These are logical architectural responsibilities rather than five independently deployed services or separate application modules.
+These are logical architectural responsibilities rather than five independently deployed services or separate application modules. In the current repository, most interface rendering, application state, transaction interactions, and wallet integration logic are concentrated in `src/App.tsx`. Supporting demonstration data and calculation utilities are maintained in `src/data.ts`, while shared application types are defined in `src/types.ts`. The logical architecture therefore describes responsibilities within a compact frontend codebase rather than a fully modular folder structure. 
 
 ### 3.2 High-Level Architecture
 
@@ -1340,6 +1340,7 @@ A traditional frontend application usually communicates with its own backend or 
 WalletFlow integrates with MetaMask through the Ethereum provider interface and uses ethers.js to interact with the provider.
 
 The integration is intentionally read-only. Its purpose is to retrieve wallet-related information and display the connection state without executing financial transactions.
+The term read-only describes the application's blockchain interaction scope; it does not mean that account access requires no permission. The connection workflow uses the provider's `eth_requestAccounts` method, which can prompt the user to approve account access. The application then retrieves selected wallet information without requesting transaction signatures or broadcasting transactions.
 
 ## 7.2 Understanding Browser Wallets
 
@@ -3062,3 +3063,19 @@ The project ultimately demonstrates an important principle:
 | Report Type | Engineering Technical Case Study |
 
 **End of Engineering Case Study**
+
+## References and Technical Documentation
+
+The following official documentation was consulted for the technologies and interfaces used in WalletFlow.
+
+1. React Documentation. https://react.dev/
+2. TypeScript Documentation. https://www.typescriptlang.org/docs/
+3. Vite Documentation. https://vite.dev/guide/
+4. ethers.js Documentation. https://docs.ethers.org/
+5. Ethereum Improvement Proposal 1193 — Ethereum Provider JavaScript API. https://eips.ethereum.org/EIPS/eip-1193
+6. MetaMask Developer Documentation. https://docs.metamask.io/
+7. Recharts Documentation. https://recharts.org/
+8. Git Documentation. https://git-scm.com/doc
+9. Vercel Documentation. https://vercel.com/docs
+
+These references provide technical background for the tools and interfaces discussed in this case study. They are not evidence of independent testing, certification, or endorsement of WalletFlow.

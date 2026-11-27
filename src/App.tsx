@@ -27,6 +27,10 @@ import {
   Clock3,
   Wifi,
   AlertCircle,
+  Trash2,
+  Download,
+  LogOut,
+  AlertTriangle,
 } from "lucide-react";
 import { BrowserProvider, formatEther } from "ethers";
 import {
@@ -61,30 +65,131 @@ const supportedNetworks: Record<number, string> = {
   84532: "Base Sepolia",
 };
 
+const PORTFOLIO_STORAGE_KEY = "walletflow:portfolio:v1";
+
+type SavedPortfolio = {
+  assets: Asset[];
+  transactions: Transaction[];
+};
+
+function isAsset(value: unknown): value is Asset {
+  if (typeof value !== "object" || value === null) return false;
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.id === "string" &&
+    typeof item.name === "string" &&
+    typeof item.symbol === "string" &&
+    typeof item.balance === "number" && Number.isFinite(item.balance) && item.balance >= 0 &&
+    typeof item.priceUsd === "number" && Number.isFinite(item.priceUsd) && item.priceUsd >= 0 &&
+    typeof item.change24h === "number" && Number.isFinite(item.change24h) &&
+    typeof item.color === "string"
+  );
+}
+
+function isTransaction(value: unknown): value is Transaction {
+  if (typeof value !== "object" || value === null) return false;
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.id === "string" &&
+    typeof item.name === "string" &&
+    typeof item.symbol === "string" &&
+    ["Received", "Sent", "Bought", "Swapped"].includes(String(item.type)) &&
+    typeof item.amount === "string" &&
+    typeof item.date === "string" &&
+    ["Completed", "Pending"].includes(String(item.status))
+  );
+}
+
+function createRecordId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `wf-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function loadPortfolio(): SavedPortfolio {
+  try {
+    const saved = localStorage.getItem(PORTFOLIO_STORAGE_KEY);
+
+    if (saved) {
+      const parsed: unknown = JSON.parse(saved);
+
+      if (
+        typeof parsed === "object" &&
+        parsed !== null &&
+        "assets" in parsed &&
+        "transactions" in parsed &&
+        Array.isArray(parsed.assets) &&
+        Array.isArray(parsed.transactions)
+      ) {
+        const validAssets = parsed.assets.filter(isAsset);
+        const validTransactions = parsed.transactions.filter(isTransaction);
+        return {
+          assets: validAssets.length ? validAssets : initialAssets,
+          transactions: validTransactions,
+        };
+      }
+    }
+  } catch {
+    // If browser storage is unavailable or contains invalid JSON,
+    // start with the sample portfolio instead.
+  }
+
+  return {
+    assets: initialAssets,
+    transactions: initialTransactions,
+  };
+}
+
 function shortenAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+function getWalletErrorMessage(error: unknown) {
+  const walletError = error as { code?: number; message?: string };
+
+  switch (walletError?.code) {
+    case 4001:
+      return "Connection request was rejected in your wallet.";
+    case 4100:
+      return "Wallet permission was not granted. Check your wallet's connected sites.";
+    case 4900:
+      return "Your wallet is disconnected from its network. Reopen your wallet and try again.";
+    case 4901:
+      return "Your wallet is not connected to the selected network.";
+    case -32002:
+      return "A wallet request is already pending. Open your wallet to respond to it.";
+    default:
+      return walletError?.message || "Could not connect to the browser wallet. Please try again.";
+  }
+}
+
 function App() {
-  const [assets, setAssets] = useState<Asset[]>(initialAssets);
+  const [savedPortfolio] = useState<SavedPortfolio>(loadPortfolio);
+  const [assets, setAssets] = useState<Asset[]>(savedPortfolio.assets);
   const [transactions, setTransactions] =
-    useState<Transaction[]>(initialTransactions);
+    useState<Transaction[]>(savedPortfolio.transactions);
 
   const [activeAction, setActiveAction] = useState<Action>(null);
   const [hideBalance, setHideBalance] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
   const [toast, setToast] = useState("");
   const [query, setQuery] = useState("");
+  const [transactionType, setTransactionType] =
+    useState<"All" | Transaction["type"]>("All");
   const [range, setRange] = useState<ChartRange>("1M");
 
   const [wallet, setWallet] = useState<WalletState | null>(null);
   const [walletLoading, setWalletLoading] = useState(false);
+  const [walletRefreshing, setWalletRefreshing] = useState(false);
+  const [walletAvailable, setWalletAvailable] = useState(Boolean(window.ethereum));
   const [walletError, setWalletError] = useState("");
 
   const [amount, setAmount] = useState("");
   const [symbol, setSymbol] = useState("ETH");
   const [targetSymbol, setTargetSymbol] = useState("USDC");
   const [recipient, setRecipient] = useState("");
+  const [formError, setFormError] = useState("");
 
   const totalValue = useMemo(
     () => assets.reduce((sum, asset) => sum + assetValue(asset), 0),
@@ -96,11 +201,25 @@ function App() {
     [range, totalValue]
   );
 
-  const filteredTransactions = transactions.filter((tx) =>
-    `${tx.name} ${tx.symbol} ${tx.type} ${tx.status}`
+  const filteredTransactions = transactions.filter((tx) => {
+    const matchesSearch = `${tx.name} ${tx.symbol} ${tx.type} ${tx.status}`
       .toLowerCase()
-      .includes(query.toLowerCase())
-  );
+      .includes(query.trim().toLowerCase());
+    const matchesType = transactionType === "All" || tx.type === transactionType;
+    return matchesSearch && matchesType;
+  });
+
+  useEffect(() => {
+    try {
+      const portfolio: SavedPortfolio = { assets, transactions };
+      localStorage.setItem(
+        PORTFOLIO_STORAGE_KEY,
+        JSON.stringify(portfolio)
+      );
+    } catch {
+      // The app remains usable even if browser storage is unavailable.
+    }
+  }, [assets, transactions]);
 
   const notify = (message: string) => {
     setToast(message);
@@ -109,7 +228,11 @@ function App() {
 
   const refreshWallet = useCallback(
     async (address?: string, chainId?: number) => {
-      if (!window.ethereum) return;
+      if (!window.ethereum) {
+        setWalletAvailable(false);
+        setWallet(null);
+        throw new Error("No browser wallet was detected.");
+      }
 
       const provider = new BrowserProvider(window.ethereum as never);
       const accounts = address
@@ -130,18 +253,21 @@ function App() {
         chainId: chainId ?? Number(network.chainId),
         nativeBalance: Number(formatEther(balance)).toFixed(5),
       });
+      setWalletError("");
     },
     []
   );
 
   const connectWallet = async () => {
     if (!window.ethereum) {
+      setWalletAvailable(false);
       setWalletError(
-        "No browser wallet detected. Install MetaMask from its official website."
+        "No browser wallet detected. Install a wallet extension from its official website, then reload WalletFlow."
       );
       return;
     }
 
+    setWalletAvailable(true);
     setWalletLoading(true);
     setWalletError("");
 
@@ -156,18 +282,46 @@ function App() {
       await refreshWallet(String(accounts[0]));
       notify("Wallet connected in read-only mode.");
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Could not connect wallet.";
-
-      setWalletError(message);
+      setWalletError(getWalletErrorMessage(error));
     } finally {
       setWalletLoading(false);
     }
   };
 
+  const refreshWalletBalance = async () => {
+    setWalletRefreshing(true);
+    setWalletError("");
+
+    try {
+      await refreshWallet();
+      notify("Wallet information refreshed.");
+    } catch (error) {
+      setWalletError(getWalletErrorMessage(error));
+    } finally {
+      setWalletRefreshing(false);
+    }
+  };
+
+  const forgetWallet = () => {
+    setWallet(null);
+    setWalletError("");
+    notify("Wallet disconnected from this dashboard. Site permission may remain in your wallet settings.");
+  };
+
   useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileNav(false);
+        setActiveAction(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, []);
+
+  useEffect(() => {
+    setWalletAvailable(Boolean(window.ethereum));
     if (!window.ethereum) return;
 
     const handleAccounts = (accounts: unknown) => {
@@ -178,17 +332,24 @@ function App() {
         return;
       }
 
-      void refreshWallet(String(list[0]));
+      void refreshWallet(String(list[0])).catch((error) =>
+        setWalletError(getWalletErrorMessage(error))
+      );
     };
 
     const handleChain = () => {
-      void refreshWallet();
+      void refreshWallet().catch((error) =>
+        setWalletError(getWalletErrorMessage(error))
+      );
     };
 
     window.ethereum.on?.("accountsChanged", handleAccounts);
     window.ethereum.on?.("chainChanged", handleChain);
 
-    void refreshWallet().catch(() => setWallet(null));
+    void refreshWallet().catch((error) => {
+      setWallet(null);
+      setWalletError(getWalletErrorMessage(error));
+    });
 
     return () => {
       window.ethereum?.removeListener?.(
@@ -224,7 +385,7 @@ function App() {
     setTransactions((current) => [
       {
         ...tx,
-        id: crypto.randomUUID(),
+        id: createRecordId(),
         date: "Just now",
         status: "Completed",
       },
@@ -232,123 +393,179 @@ function App() {
     ]);
   };
 
-  const runDemoAction = () => {
-    const parsedAmount = Number(amount);
-    const source = assets.find(
-      (asset) => asset.symbol === symbol
+  const deleteTransaction = (transactionId: string) => {
+    setTransactions((current) =>
+      current.filter((transaction) => transaction.id !== transactionId)
+    );
+    notify("Activity record deleted. Portfolio balances were not changed.");
+  };
+
+  const clearTransactionHistory = () => {
+    if (!transactions.length) return;
+
+    const confirmed = window.confirm(
+      "Delete all activity records? This will not change your portfolio balances."
     );
 
-    if (
-      !source ||
-      !Number.isFinite(parsedAmount) ||
-      parsedAmount <= 0
-    ) {
-      notify("Enter a valid amount.");
+    if (!confirmed) return;
+
+    setTransactions([]);
+    notify("Activity history cleared.");
+  };
+
+  const exportTransactions = () => {
+    if (!transactions.length) {
+      notify("There are no activity records to export.");
       return;
     }
 
-    if (activeAction === "send") {
-      if (!recipient.trim()) {
-        notify("Enter a demo recipient label or address.");
+    const headers = ["Name", "Symbol", "Type", "Amount", "Date", "Status"];
+    const rows = transactions.map((tx) => [
+      tx.name,
+      tx.symbol,
+      tx.type,
+      tx.amount,
+      tx.date,
+      tx.status,
+    ]);
+    const escapeCsv = (value: string) =>
+      `"${String(value).replace(/"/g, '""')}"`;
+    const csv = [headers, ...rows]
+      .map((row) => row.map(escapeCsv).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "walletflow-activity.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    notify("Activity exported as CSV.");
+  };
+
+  const runDemoAction = () => {
+    setFormError("");
+
+    try {
+      const parsedAmount = Number(amount);
+      const source = assets.find((asset) => asset.symbol === symbol);
+
+      if (!amount.trim() || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+        setFormError("Enter an amount greater than zero.");
         return;
       }
 
-      if (source.balance < parsedAmount) {
-        notify("Insufficient demo balance.");
+      if (!source) {
+        setFormError("Choose an asset that exists in your portfolio.");
         return;
       }
 
-      updateBalance(symbol, -parsedAmount);
-
-      addTransaction({
-        name: source.name,
-        symbol,
-        type: "Sent",
-        amount: `-${formatBalance(parsedAmount, symbol)}`,
-      });
-
-      notify("Demo transfer recorded locally. No funds were sent.");
-    } else if (
-      activeAction === "receive" ||
-      activeAction === "buy"
-    ) {
-      updateBalance(symbol, parsedAmount);
-
-      addTransaction({
-        name: source.name,
-        symbol,
-        type: activeAction === "receive" ? "Received" : "Bought",
-        amount: `+${formatBalance(parsedAmount, symbol)}`,
-      });
-
-      notify("Demo portfolio updated locally.");
-    } else if (activeAction === "swap") {
-      const target = assets.find(
-        (asset) => asset.symbol === targetSymbol
-      );
-
-      if (!target || target.symbol === source.symbol) {
-        notify("Choose two different assets.");
+      if (!Number.isFinite(source.balance) || source.balance < 0) {
+        setFormError("This asset has an invalid demo balance. Reload the page and try again.");
         return;
       }
 
-      if (source.balance < parsedAmount) {
-        notify("Insufficient demo balance.");
-        return;
+      if (activeAction === "send") {
+        const cleanRecipient = recipient.trim();
+        if (cleanRecipient.length < 2 || cleanRecipient.length > 80) {
+          setFormError("Enter a demo recipient label between 2 and 80 characters.");
+          return;
+        }
+
+        if (source.balance < parsedAmount) {
+          setFormError("Insufficient demo balance for this action.");
+          return;
+        }
+
+        updateBalance(symbol, -parsedAmount);
+        addTransaction({
+          name: source.name,
+          symbol,
+          type: "Sent",
+          amount: `-${formatBalance(parsedAmount, symbol)}`,
+        });
+        notify("Demo transfer recorded locally. No funds were sent.");
+      } else if (activeAction === "receive" || activeAction === "buy") {
+        updateBalance(symbol, parsedAmount);
+        addTransaction({
+          name: source.name,
+          symbol,
+          type: activeAction === "receive" ? "Received" : "Bought",
+          amount: `+${formatBalance(parsedAmount, symbol)}`,
+        });
+        notify("Demo portfolio updated locally.");
+      } else if (activeAction === "swap") {
+        const target = assets.find((asset) => asset.symbol === targetSymbol);
+
+        if (!target || target.symbol === source.symbol) {
+          setFormError("Choose two different assets for the demo swap.");
+          return;
+        }
+
+        if (source.balance < parsedAmount) {
+          setFormError("Insufficient demo balance for this swap.");
+          return;
+        }
+
+        if (!Number.isFinite(target.priceUsd) || target.priceUsd <= 0 || !Number.isFinite(source.priceUsd) || source.priceUsd <= 0) {
+          setFormError("A valid sample price is unavailable for one of these assets.");
+          return;
+        }
+
+        const output = (parsedAmount * source.priceUsd * 0.995) / target.priceUsd;
+        if (!Number.isFinite(output) || output <= 0) {
+          setFormError("The demo swap could not calculate a valid output amount.");
+          return;
+        }
+
+        setAssets((current) =>
+          current.map((asset) => {
+            if (asset.symbol === source.symbol) {
+              return { ...asset, balance: asset.balance - parsedAmount };
+            }
+            if (asset.symbol === target.symbol) {
+              return { ...asset, balance: asset.balance + output };
+            }
+            return asset;
+          })
+        );
+
+        addTransaction({
+          name: `${source.name} → ${target.name}`,
+          symbol: target.symbol,
+          type: "Swapped",
+          amount: `${formatBalance(parsedAmount, source.symbol)} → ${formatBalance(output, target.symbol)}`,
+        });
+        notify("Demo swap recorded locally. No blockchain transaction occurred.");
       }
 
-      const output =
-        (parsedAmount * source.priceUsd * 0.995) /
-        target.priceUsd;
-
-      setAssets((current) =>
-        current.map((asset) => {
-          if (asset.symbol === source.symbol) {
-            return {
-              ...asset,
-              balance: asset.balance - parsedAmount,
-            };
-          }
-
-          if (asset.symbol === target.symbol) {
-            return {
-              ...asset,
-              balance: asset.balance + output,
-            };
-          }
-
-          return asset;
-        })
-      );
-
-      addTransaction({
-        name: `${source.name} → ${target.name}`,
-        symbol: target.symbol,
-        type: "Swapped",
-        amount: `${formatBalance(parsedAmount, source.symbol)} → ${formatBalance(output, target.symbol)}`,
-      });
-
-      notify(
-        "Demo swap recorded locally. No blockchain transaction occurred."
-      );
+      setActiveAction(null);
+      setAmount("");
+      setRecipient("");
+      setFormError("");
+    } catch {
+      setFormError("Something went wrong while updating the demo portfolio. Your data may not have changed; please try again.");
     }
-
-    setActiveAction(null);
-    setAmount("");
-    setRecipient("");
   };
 
   const openAction = (action: Action) => {
     setAmount("");
     setRecipient("");
+    setFormError("");
     setActiveAction(action);
   };
 
   const copyAddress = async () => {
     if (!wallet?.address) return;
 
-    await navigator.clipboard.writeText(wallet.address);
-    notify("Wallet address copied.");
+    try {
+      await navigator.clipboard.writeText(wallet.address);
+      notify("Wallet address copied.");
+    } catch {
+      setWalletError("Clipboard access is unavailable. You can select and copy the address manually.");
+    }
   };
 
   const networkName = wallet
@@ -358,7 +575,11 @@ function App() {
 
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${mobileNav ? "sidebar-open" : ""}`}>
+      <aside
+        id="walletflow-sidebar"
+        className={`sidebar ${mobileNav ? "sidebar-open" : ""}`}
+        aria-label="Main navigation"
+      >
         <div className="brand">
           <div className="brand-mark">
             <Wallet size={21} />
@@ -378,13 +599,13 @@ function App() {
         <div className="workspace-label">WORKSPACE</div>
 
         <nav className="nav-list">
-          <a className="nav-item active" href="#overview">
+          <a className="nav-item active" href="#overview" onClick={() => setMobileNav(false)}>
             <LayoutDashboard size={18} /> Overview
           </a>
-          <a className="nav-item" href="#assets">
+          <a className="nav-item" href="#assets" onClick={() => setMobileNav(false)}>
             <Wallet size={18} /> My assets
           </a>
-          <a className="nav-item" href="#activity">
+          <a className="nav-item" href="#activity" onClick={() => setMobileNav(false)}>
             <ArrowLeftRight size={18} /> Transactions
           </a>
         </nav>
@@ -656,38 +877,63 @@ function App() {
                     <span>Native balance</span>
                     <strong>{wallet.nativeBalance} ETH</strong>
                   </div>
-                  <button
-                    className="btn btn-secondary wallet-refresh"
-                    onClick={() => void refreshWallet()}
-                  >
-                    <RefreshCw size={14} /> Refresh balance
-                  </button>
+                  {!supportedNetworks[wallet.chainId] && (
+                    <div className="inline-error" role="status">
+                      <AlertTriangle size={14} />
+                      This network is not in WalletFlow's displayed network list. Balance is shown as reported by your wallet.
+                    </div>
+                  )}
+                  {walletError && (
+                    <div className="inline-error" role="alert">
+                      <AlertCircle size={14} /> {walletError}
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 8, width: "100%" }}>
+                    <button
+                      className="btn btn-secondary wallet-refresh"
+                      onClick={() => void refreshWalletBalance()}
+                      disabled={walletRefreshing}
+                      style={{ flex: 1 }}
+                    >
+                      <RefreshCw className={walletRefreshing ? "spin" : ""} size={14} />
+                      {walletRefreshing ? "Refreshing..." : "Refresh"}
+                    </button>
+                    <button
+                      className="btn btn-secondary wallet-refresh"
+                      onClick={forgetWallet}
+                      disabled={walletRefreshing}
+                      title="Hide this wallet from the dashboard"
+                    >
+                      <LogOut size={14} /> Forget
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="wallet-connect-content">
                   <div className="wallet-illustration">
                     <Wallet size={28} />
                   </div>
-                  <h3>Connect a browser wallet</h3>
+                  <h3>{walletAvailable ? "Connect a browser wallet" : "No wallet detected"}</h3>
                   <p>
-                    Read your public address, network and native test
-                    balance. WalletFlow never asks for your recovery phrase.
+                    {walletAvailable
+                      ? "View your public address, connected network and native balance. WalletFlow uses read-only access and never asks for your recovery phrase."
+                      : "Install a compatible browser wallet extension from its official website, then reload this page to connect."}
                   </p>
                   <button
                     className="btn btn-primary connect-btn"
                     onClick={() => void connectWallet()}
-                    disabled={walletLoading}
+                    disabled={walletLoading || !walletAvailable}
                   >
                     {walletLoading ? (
                       <RefreshCw className="spin" size={15} />
                     ) : (
                       <Wallet size={15} />
                     )}
-                    {walletLoading ? "Connecting..." : "Connect wallet"}
+                    {walletLoading ? "Connecting..." : walletAvailable ? "Connect wallet" : "Wallet unavailable"}
                   </button>
 
                   {walletError && (
-                    <div className="inline-error">
+                    <div className="inline-error" role="alert">
                       <AlertCircle size={14} />
                       {walletError}
                     </div>
@@ -822,14 +1068,24 @@ function App() {
               <div className="section-heading">
                 <div>
                   <span className="panel-label">PORTFOLIO LOG</span>
-                  <h2>Recent activity</h2>
+                  <h2>Transaction history</h2>
+                  <small style={{ color: "var(--muted, #8b8b9b)" }}>
+                    {filteredTransactions.length} of {transactions.length} records
+                  </small>
                 </div>
-                <button
-                  className="more-btn"
-                  onClick={() => setQuery("")}
-                >
-                  Clear search
-                </button>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button className="more-btn" onClick={exportTransactions}>
+                    <Download size={14} /> Export CSV
+                  </button>
+                  <button
+                    className="more-btn"
+                    onClick={clearTransactionHistory}
+                    disabled={!transactions.length}
+                    title="Delete all activity records"
+                  >
+                    <Trash2 size={14} /> Clear history
+                  </button>
+                </div>
               </div>
 
               <label className="activity-search">
@@ -837,9 +1093,47 @@ function App() {
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search activity..."
+                  placeholder="Search name, asset, type, or status..."
                 />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    aria-label="Clear search"
+                    style={{ border: 0, background: "transparent", color: "inherit", cursor: "pointer" }}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </label>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "12px 0" }}>
+                <label htmlFor="transaction-type-filter" style={{ fontSize: 12, color: "var(--muted, #8b8b9b)" }}>
+                  Filter type
+                </label>
+                <select
+                  id="transaction-type-filter"
+                  value={transactionType}
+                  onChange={(event) =>
+                    setTransactionType(event.target.value as "All" | Transaction["type"])
+                  }
+                  style={{
+                    background: "var(--input, rgba(255,255,255,0.06))",
+                    color: "inherit",
+                    border: "1px solid var(--border, rgba(255,255,255,0.12))",
+                    borderRadius: 8,
+                    padding: "7px 10px",
+                    font: "inherit",
+                    fontSize: 12,
+                  }}
+                >
+                  <option value="All">All activity</option>
+                  <option value="Received">Received</option>
+                  <option value="Sent">Sent</option>
+                  <option value="Bought">Bought</option>
+                  <option value="Swapped">Swapped</option>
+                </select>
+              </div>
 
               <div className="activity-list">
                 {filteredTransactions.length ? (
@@ -857,7 +1151,7 @@ function App() {
                         )}
                       </div>
 
-                      <div className="activity-copy">
+                      <div className="activity-copy" style={{ minWidth: 0, flex: 1 }}>
                         <strong>
                           {tx.type} {tx.name}
                         </strong>
@@ -870,18 +1164,38 @@ function App() {
                           {tx.status}
                         </small>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => deleteTransaction(tx.id)}
+                        aria-label={`Delete ${tx.type} ${tx.name} record`}
+                        title="Delete this activity record"
+                        style={{
+                          border: 0,
+                          background: "transparent",
+                          color: "var(--muted, #8b8b9b)",
+                          cursor: "pointer",
+                          padding: 7,
+                          marginLeft: 4,
+                          display: "inline-flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </div>
                   ))
                 ) : (
                   <div className="empty-state">
-                    No matching activity found.
+                    {transactions.length
+                      ? "No activity matches your search or filter."
+                      : "No activity records yet. Your demo transactions will appear here."}
                   </div>
                 )}
               </div>
 
               <div className="activity-disclaimer">
-                <Clock3 size={13} /> Activity is stored in this browser
-                session only.
+                <Clock3 size={13} /> Activity is saved locally. Deleting records does not change portfolio balances.
               </div>
             </div>
           </section>
@@ -943,7 +1257,10 @@ function App() {
                 <select
                   id="asset-symbol"
                   value={symbol}
-                  onChange={(event) => setSymbol(event.target.value)}
+                  onChange={(event) => {
+                    setSymbol(event.target.value);
+                    setFormError("");
+                  }}
                 >
                   {assets.map((asset) => (
                     <option key={asset.symbol} value={asset.symbol}>
@@ -967,9 +1284,10 @@ function App() {
                     <select
                       id="target-symbol"
                       value={targetSymbol}
-                      onChange={(event) =>
-                        setTargetSymbol(event.target.value)
-                      }
+                      onChange={(event) => {
+                        setTargetSymbol(event.target.value);
+                        setFormError("");
+                      }}
                     >
                       {assets.map((asset) => (
                         <option
@@ -995,8 +1313,13 @@ function App() {
                   type="number"
                   min="0"
                   step="any"
+                  required
+                  inputMode="decimal"
                   value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
+                  onChange={(event) => {
+                    setAmount(event.target.value);
+                    setFormError("");
+                  }}
                   placeholder="0.00"
                 />
                 <span>{symbol}</span>
@@ -1013,13 +1336,21 @@ function App() {
                   <input
                     className="text-input"
                     id="recipient-input"
+                    maxLength={80}
                     value={recipient}
-                    onChange={(event) =>
-                      setRecipient(event.target.value)
-                    }
+                    onChange={(event) => {
+                      setRecipient(event.target.value);
+                      setFormError("");
+                    }}
                     placeholder="Enter a label (e.g. Test account)"
                   />
                 </>
+              )}
+
+              {formError && (
+                <div className="inline-error" role="alert" style={{ marginTop: 12 }}>
+                  <AlertCircle size={14} /> {formError}
+                </div>
               )}
 
               <div className="fee-note">

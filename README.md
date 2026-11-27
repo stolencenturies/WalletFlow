@@ -1,14 +1,34 @@
 # WalletFlow
 
-**A modern, responsive Web3 portfolio dashboard built with React, TypeScript, Vite, and CSS.**
+### A modern Web3 portfolio dashboard built with React, TypeScript, and Vite.
 
-WalletFlow provides a fintech-inspired interface for exploring digital asset holdings, monitoring portfolio analytics, managing demo transactions, and connecting a browser wallet in read-only mode.
+WalletFlow is a responsive fintech-inspired cryptocurrency portfolio dashboard designed to explore digital asset holdings, visualize portfolio analytics, manage simulated transactions, and connect a browser wallet in read-only mode.
 
 <p align="center">
-  <a href="https://wallet-flow-lovat.vercel.app/"><strong>Live Demo</strong></a>
-  ·
-  <a href="https://github.com/stolencenturies/WalletFlow"><strong>GitHub Repository</strong></a>
+  <a href="https://wallet-flow-lovat.vercel.app/">
+    <strong>🌐 Live Demo</strong>
+  </a>
 </p>
+
+---
+
+## Preview
+
+### Dashboard
+
+![WalletFlow Dashboard](public/images/dashboard.png)
+
+### My Assets
+
+![WalletFlow Assets](public/images/assets.png)
+
+### Transaction History
+
+![WalletFlow Transactions](public/images/transactions.png)
+
+### Wallet Connection
+
+![WalletFlow Wallet Connection](public/images/wallet-connection.png)
 
 ---
 
@@ -22,9 +42,9 @@ WalletFlow provides a fintech-inspired interface for exploring digital asset hol
 - Overview of assets, recent activity, and wallet status.
 
 ### Asset Management
-- Demo asset holdings for ETH, BTC, and USDC.
-- Portfolio data and demo prices.
-- Locally persisted portfolio changes.
+- Demo holdings for Ethereum (ETH), Bitcoin (BTC), and USD Coin (USDC).
+- Asset prices and portfolio valuation using illustrative data.
+- Locally persisted demo portfolio changes.
 
 ### Transaction Management
 - Simulated Send, Receive, Swap, and Buy actions.
@@ -43,25 +63,10 @@ WalletFlow provides a fintech-inspired interface for exploring digital asset hol
 
 ### User Experience
 - Responsive sidebar navigation.
-- Mobile-friendly layout.
+- Mobile-friendly layouts.
 - Toast notifications.
-- Input validation and defensive error handling.
-- Persistent demo data using localStorage.
-
----
-
-## Important Disclaimer
-
-WalletFlow is an educational frontend portfolio project, not a production cryptocurrency wallet or financial service.
-
-- Portfolio prices and chart performance are illustrative demo data.
-- Send, Receive, Swap, and Buy actions are simulations.
-- Demo transactions do not transfer actual funds.
-- MetaMask connectivity is read-only and is used to retrieve publicly available wallet information.
-- WalletFlow does not request transaction signatures or execute blockchain transactions.
-- Demo portfolio records are stored locally in the browser.
-
-Never send cryptocurrency to placeholder addresses displayed by the application.
+- Input validation and error handling.
+- Local storage persistence.
 
 ---
 
@@ -71,13 +76,13 @@ Never send cryptocurrency to placeholder addresses displayed by the application.
 |---|---|
 | React | User interface |
 | TypeScript | Type safety |
-| Vite | Development server and build tooling |
+| Vite | Development and build tooling |
 | CSS | Styling and responsive layouts |
 | Recharts | Portfolio charts |
 | ethers.js | Wallet and blockchain data interaction |
 | Lucide React | Icons |
 | localStorage | Local demo data persistence |
-| MetaMask | Optional read-only browser wallet connection |
+| MetaMask | Optional read-only wallet connection |
 
 ---
 
@@ -85,35 +90,37 @@ Never send cryptocurrency to placeholder addresses displayed by the application.
 
 ### Requirements
 
-- Node.js (20 LTS recommended)
+- Node.js 20 LTS recommended
 - npm
 - Git
 
-### 1. Clone the repository
+### Installation
+
+**1. Clone the repository**
 
 ```bash
-git clone https://github.com/stolencenturies/WalletFlow.git
+git clone YOUR_GITHUB_REPOSITORY_URL
 ```
 
-### 2. Enter the project directory
+**2. Navigate into the project directory**
 
 ```bash
 cd WalletFlow
 ```
 
-### 3. Install dependencies
+**3. Install dependencies**
 
 ```bash
 npm install
 ```
 
-### 4. Start the development server
+**4. Start the development server**
 
 ```bash
 npm run dev
 ```
 
-Open the local URL displayed in your terminal, usually:
+Open the local URL provided by Vite, usually:
 
 ```text
 http://localhost:5173
@@ -128,11 +135,9 @@ http://localhost:5173
 | `npm run dev` | Start the development server |
 | `npm run lint` | Run ESLint checks |
 | `npm run build` | Create a production build |
-| `npm run preview` | Preview the production build locally |
+| `npm run preview` | Preview the production build |
 
-### Production Build
-
-To create and verify a production build:
+### Production Verification
 
 ```bash
 npm run lint
@@ -147,6 +152,11 @@ npm run preview
 ```text
 WalletFlow/
 ├── public/
+│   └── images/
+│       ├── dashboard.png
+│       ├── assets.png
+│       ├── transactions.png
+│       └── wallet-connection.png
 ├── src/
 │   ├── App.tsx
 │   ├── App.css
@@ -155,7 +165,6 @@ WalletFlow/
 │   ├── main.tsx
 │   ├── types.ts
 │   └── vite-env.d.ts
-├── .env.example
 ├── .gitignore
 ├── eslint.config.js
 ├── index.html
@@ -171,12 +180,27 @@ WalletFlow/
 
 ## Deployment
 
-WalletFlow is deployed using Vercel.
+WalletFlow is deployed on Vercel.
 
 **Live Application:**  
 https://wallet-flow-lovat.vercel.app/
 
-The project is connected to GitHub for deployment updates.
+The GitHub repository is connected to Vercel for automated deployments when changes are pushed to the production branch.
+
+---
+
+## Important Disclaimer
+
+WalletFlow is an educational frontend portfolio project, not a production cryptocurrency wallet or financial service.
+
+- Portfolio prices and chart performance are illustrative demo data.
+- Send, Receive, Swap, and Buy actions are simulations.
+- Demo transactions do not transfer actual funds.
+- MetaMask connectivity is read-only and retrieves publicly available wallet information.
+- WalletFlow does not request transaction signatures or execute blockchain transactions.
+- Demo portfolio records are stored locally in the browser.
+
+Never send cryptocurrency to placeholder addresses displayed by the application.
 
 ---
 
@@ -184,7 +208,7 @@ The project is connected to GitHub for deployment updates.
 
 Potential areas for future development:
 
-- Additional portfolio analytics.
+- Expanded portfolio analytics.
 - More detailed asset information.
 - Improved accessibility.
 - Expanded automated testing.
@@ -195,4 +219,3 @@ Potential areas for future development:
 ## License
 
 This project is provided for educational and portfolio demonstration purposes.
-

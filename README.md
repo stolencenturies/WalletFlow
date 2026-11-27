@@ -1,48 +1,151 @@
-
 # WalletFlow
 
-A responsive fintech-style cryptocurrency portfolio dashboard built with React, TypeScript, Vite, and CSS.
+**A modern, responsive Web3 portfolio dashboard built with React, TypeScript, Vite, and CSS.**
+
+WalletFlow provides a fintech-inspired interface for exploring digital asset holdings, monitoring portfolio analytics, managing demo transactions, and connecting a browser wallet in read-only mode.
+
+<p align="center">
+  <a href="https://wallet-flow-lovat.vercel.app/"><strong>Live Demo</strong></a>
+  ·
+  <a href="https://github.com/stolencenturies/WalletFlow"><strong>GitHub Repository</strong></a>
+</p>
+
+---
 
 ## Features
 
-- Dark, responsive portfolio dashboard
-- Portfolio value calculated from asset balances and demo prices
-- Asset holdings for ETH, BTC, and USDC
-- Simulated Send, Receive, Swap, and Buy actions
-- Searchable recent activity feed
-- Balance visibility toggle
-- Toast notifications and responsive mobile navigation
+### Portfolio Dashboard
+- Dark, responsive fintech-inspired interface.
+- Portfolio value and asset allocation overview.
+- Interactive portfolio performance chart with selectable time ranges.
+- Balance visibility toggle.
+- Overview of assets, recent activity, and wallet status.
 
-## Important demo disclaimer
+### Asset Management
+- Demo asset holdings for ETH, BTC, and USDC.
+- Portfolio data and demo prices.
+- Locally persisted portfolio changes.
 
-WalletFlow is a frontend portfolio project. All prices and transactions are sample data. It does not connect to a blockchain, create real wallet addresses, move funds, or process payments. Never send funds to the placeholder addresses shown in the Receive dialog.
+### Transaction Management
+- Simulated Send, Receive, Swap, and Buy actions.
+- Transaction history with search and filtering.
+- Delete individual demo transactions.
+- Clear transaction history.
+- Export transaction history as CSV.
+- Local browser persistence for demo records.
 
-## Requirements
+### Wallet Connectivity
+- Optional MetaMask connection through the browser wallet provider.
+- Read-only wallet information.
+- Native ETH balance retrieval.
+- Wallet account and network change synchronization.
+- Wallet connection status and error handling.
 
-- Node.js 18 or newer (Node.js 20 LTS recommended)
+### User Experience
+- Responsive sidebar navigation.
+- Mobile-friendly layout.
+- Toast notifications.
+- Input validation and defensive error handling.
+- Persistent demo data using localStorage.
+
+---
+
+## Important Disclaimer
+
+WalletFlow is an educational frontend portfolio project, not a production cryptocurrency wallet or financial service.
+
+- Portfolio prices and chart performance are illustrative demo data.
+- Send, Receive, Swap, and Buy actions are simulations.
+- Demo transactions do not transfer actual funds.
+- MetaMask connectivity is read-only and is used to retrieve publicly available wallet information.
+- WalletFlow does not request transaction signatures or execute blockchain transactions.
+- Demo portfolio records are stored locally in the browser.
+
+Never send cryptocurrency to placeholder addresses displayed by the application.
+
+---
+
+## Tech Stack
+
+| Technology | Purpose |
+|---|---|
+| React | User interface |
+| TypeScript | Type safety |
+| Vite | Development server and build tooling |
+| CSS | Styling and responsive layouts |
+| Recharts | Portfolio charts |
+| ethers.js | Wallet and blockchain data interaction |
+| Lucide React | Icons |
+| localStorage | Local demo data persistence |
+| MetaMask | Optional read-only browser wallet connection |
+
+---
+
+## Getting Started
+
+### Requirements
+
+- Node.js (20 LTS recommended)
 - npm
-- Git (optional, for version control)
+- Git
 
-## Run locally
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/stolencenturies/WalletFlow.git
+```
+
+### 2. Enter the project directory
+
+```bash
+cd WalletFlow
+```
+
+### 3. Install dependencies
 
 ```bash
 npm install
+```
+
+### 4. Start the development server
+
+```bash
 npm run dev
 ```
 
-Open the local URL printed by Vite, usually `http://localhost:5173`.
+Open the local URL displayed in your terminal, usually:
 
-## Quality checks
+```text
+http://localhost:5173
+```
+
+---
+
+## Available Scripts
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start the development server |
+| `npm run lint` | Run ESLint checks |
+| `npm run build` | Create a production build |
+| `npm run preview` | Preview the production build locally |
+
+### Production Build
+
+To create and verify a production build:
 
 ```bash
 npm run lint
 npm run build
+npm run preview
 ```
 
-## Project structure
+---
+
+## Project Structure
 
 ```text
-walletflow/
+WalletFlow/
 ├── public/
 ├── src/
 │   ├── App.tsx
@@ -50,41 +153,46 @@ walletflow/
 │   ├── data.ts
 │   ├── index.css
 │   ├── main.tsx
-│   └── types.ts
+│   ├── types.ts
+│   └── vite-env.d.ts
+├── .env.example
 ├── .gitignore
 ├── eslint.config.js
 ├── index.html
 ├── package.json
+├── package-lock.json
 ├── tsconfig.app.json
 ├── tsconfig.json
 ├── tsconfig.node.json
 └── vite.config.ts
 ```
 
-## GitHub
+---
 
-Create an empty repository on GitHub, then run these commands in the project folder (replace the URL with your repository URL):
+## Deployment
 
-```bash
-git init
-git add .
-git commit -m "feat: build WalletFlow portfolio dashboard"
-git branch -M main
-git remote add origin https://github.com/YOUR-USERNAME/walletflow.git
-git push -u origin main
-```
+WalletFlow is deployed using Vercel.
 
-After future changes:
+**Live Application:**  
+https://wallet-flow-lovat.vercel.app/
 
-```bash
-git add .
-git commit -m "describe your change"
-git push
-```
+The project is connected to GitHub for deployment updates.
+
+---
+
+## Future Improvements
+
+Potential areas for future development:
+
+- Additional portfolio analytics.
+- More detailed asset information.
+- Improved accessibility.
+- Expanded automated testing.
+- Further performance optimization.
+
+---
 
 ## License
 
-This project is provided for learning and portfolio demonstration.
-
-# Walletlens
+This project is provided for educational and portfolio demonstration purposes.
 

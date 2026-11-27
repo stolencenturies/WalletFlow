@@ -29,6 +29,23 @@ The report also discusses architectural trade-offs, implementation limitations, 
 
 **Keywords:** Web3, React, TypeScript, Ethereum, MetaMask, Frontend Engineering, State Management, Software Architecture.
 
+
+## Table of Contents
+
+1. [Introduction](#1-introduction)
+2. [Problem Definition and Software Requirements](#2-problem-definition-and-software-requirements)
+3. [System Architecture](#3-system-architecture)
+4. [Technology Selection and Engineering Trade-offs](#4-technology-selection-and-engineering-trade-offs)
+5. [Implementation: From Architecture to Working Product](#5-implementation-from-architecture-to-working-product)
+6. [State Management and Data Persistence](#6-state-management-and-data-persistence)
+7. [Ethereum Provider and MetaMask Integration](#7-ethereum-provider-and-metamask-integration)
+8. [Testing and Quality Assurance](#8-testing-and-quality-assurance)
+9. [Production Deployment and Delivery](#9-production-deployment-and-delivery)
+10. [Limitations, Security Considerations, and Risk Analysis](#10-limitations-security-considerations-and-risk-analysis)
+11. [Startup Applications and Reusable Engineering Blueprint](#11-startup-applications-and-reusable-engineering-blueprint)
+12. [Conclusion and Future Work](#12-conclusion-and-future-work)
+13. [References and Technical Documentation](#references-and-technical-documentation)
+
 ---
 
 ## 1. Introduction
@@ -295,6 +312,7 @@ flowchart TD
 
     ETHERS --> STATE
 ```
+**Figure 1. WalletFlow high-level logical system architecture.**
 
 The diagram represents the logical flow of information. It does not imply that every application interaction requires communication with an external blockchain network.
 
@@ -1104,14 +1122,52 @@ Its implementation demonstrates:
 
 The implementation provides a practical foundation for examining the engineering decisions, testing practices, and limitations discussed in the following chapters.
 
-6. State Management and Data Persistence
-6.1 Introduction
+
+### 5.16 Interface Screenshots
+
+The following screenshots provide visual evidence of the implemented application interface. They illustrate the dashboard, asset presentation, transaction management, and wallet connection experience.
+
+#### 5.16.1 Portfolio Dashboard
+
+![WalletFlow portfolio dashboard](../public/images/dashboard.png)
+
+**Figure 2. WalletFlow portfolio dashboard.**
+
+The main dashboard presents the portfolio overview, illustrative valuation, asset allocation, and portfolio visualization.
+
+#### 5.16.2 Asset Management
+
+![WalletFlow asset management interface](../public/images/assets.png)
+
+**Figure 3. WalletFlow asset management interface.**
+
+The asset view presents supported demonstration holdings and their associated portfolio information.
+
+#### 5.16.3 Transaction Management
+
+![WalletFlow transaction history](../public/images/transactions.png)
+
+**Figure 4. WalletFlow transaction management interface.**
+
+The transaction interface presents simulated activity records and the available transaction-management controls.
+
+#### 5.16.4 Wallet Connection
+
+![WalletFlow wallet connection interface](../public/images/wallet-connection.png)
+
+**Figure 5. WalletFlow wallet connection interface.**
+
+The wallet interface demonstrates the optional browser-wallet connection experience and the presentation of wallet-related information.
+
+## 6. State Management and Data Persistence
+
+## 6.1 Introduction
 State management is a central part of an interactive frontend application. In WalletFlow, the dashboard displays information that changes as users interact with assets, transactions, portfolio controls, and wallet connectivity.
 
 The application must keep these interface elements consistent while allowing supported demo information to persist between browser sessions.
 
 WalletFlow uses React's built-in state management capabilities and browser localStorage for selected persistent data. This approach keeps the implementation within the frontend application without requiring a dedicated backend service.
-6.2 Understanding Application State
+## 6.2 Understanding Application State
 Application state represents information that can change while the application is running.
 
 WalletFlow manages several categories of state:
@@ -1126,7 +1182,7 @@ Notification state	Supports feedback through toast messages
 Separating state by responsibility makes the application easier to understand and maintain.
 
 For example, changing a transaction filter should not require modifying the underlying portfolio holdings.
-6.3 React State Management
+## 6.3 React State Management
 WalletFlow uses React Hooks to manage component state and coordinate updates.
 
 Important hooks include:
@@ -1155,7 +1211,7 @@ Updated dashboard
 
 
 This creates a predictable relationship between application state and the displayed interface.
-6.4 Managing Derived Data
+## 6.4 Managing Derived Data
 Not every value displayed by a dashboard needs to be stored independently.
 
 Some values can be calculated from existing state.
@@ -1174,7 +1230,7 @@ Similarly, the interface can derive filtered transaction lists, asset summaries,
 This approach reduces unnecessary duplication.
 
 Engineering principle: Store the source data when necessary and calculate dependent values from it whenever practical.
-6.5 Browser Storage Architecture
+## 6.5 Browser Storage Architecture
 WalletFlow uses the browser's localStorage API to persist supported demo portfolio and transaction information.
 
 The application uses the storage key:
@@ -1211,7 +1267,7 @@ Browser localStorage
 
 
 This describes the general persistence design rather than a separate backend or database architecture.
-6.6 Serialization and Deserialization
+## 6.6 Serialization and Deserialization
 Browser localStorage stores values as strings.
 
 JavaScript objects and arrays therefore need to be converted into a suitable string representation before storage.
@@ -1240,7 +1296,7 @@ const portfolioData = storedData
 
 
 These examples demonstrate the underlying browser APIs. They are illustrative examples, not a claim that the application uses these exact code blocks.
-6.7 Data Initialization and Synchronization
+## 6.7 Data Initialization and Synchronization
 A persistence system must coordinate two different environments:
 1. React's in-memory application state.
 2. The browser's persistent storage.
@@ -1257,7 +1313,7 @@ A persistence implementation should also account for situations where:
 - Storage capacity is exceeded.
 - The user clears browser data.
 These are important reliability considerations for frontend applications.
-6.8 Persistence Boundaries
+## 6.8 Persistence Boundaries
 Not every piece of information belongs in persistent storage.
 
 WalletFlow distinguishes between persistent demo information and temporary application state.
@@ -1271,7 +1327,7 @@ Blockchain account information	Retrieved from the connected wallet provider
 This separation prevents the application from treating temporary interface information as permanent financial records.
 
 Wallet connection information should not be confused with the application's own locally stored demo portfolio.
-6.9 Limitations of localStorage
+## 6.9 Limitations of localStorage
 Although localStorage is useful for small frontend applications, it has important limitations.
 
 1. Browser-specific storage
@@ -1295,7 +1351,7 @@ localStorage does not provide the transaction and concurrency features expected 
 Data stored in browser storage should not be treated as a secure location for passwords, private keys, recovery phrases, or other sensitive credentials.
 
 For a production financial application, a more comprehensive architecture would be necessary.
-6.10 Engineering Trade-offs
+## 6.10 Engineering Trade-offs
 WalletFlow uses React state and browser storage because they provide a relatively simple solution for a frontend-focused demonstration.
 Decision	Advantage	Limitation
 React Hooks	Native React integration	State coordination can become complex
@@ -1312,7 +1368,7 @@ For a larger application, potential future improvements could include:
 - Cross-device synchronization.
 - More comprehensive automated testing.
 These are proposed improvements, not currently implemented WalletFlow features.
-6.11 Lessons for Engineering Teams
+## 6.11 Lessons for Engineering Teams
 WalletFlow demonstrates several useful frontend engineering principles:
 1. Keep source data separate from calculated display values.
 2. Organize state according to its responsibility.
@@ -1322,16 +1378,16 @@ WalletFlow demonstrates several useful frontend engineering principles:
 6. Consider storage failures and malformed data.
 7. Clearly communicate what information is persistent and what is temporary.
 These principles become increasingly important as an application grows in complexity.
-6.12 Chapter Summary
+## 6.12 Chapter Summary
 WalletFlow combines React Hooks with browser localStorage to manage interactive application state and persist supported demo information.
 
 This approach provides a lightweight persistence mechanism suitable for a frontend engineering project. However, it does not replace a backend database, secure credential storage, or a distributed synchronization system.
 
 Understanding these boundaries is essential when evaluating the architecture and considering how the project could evolve into a larger application.
 
-# 7. Ethereum Provider and MetaMask Integration
+## 7. Ethereum Provider and MetaMask Integration
 
-## 7.1 Introduction
+### 7.1 Introduction
 
 Blockchain integration introduces a different set of engineering considerations compared with ordinary frontend development.
 
@@ -1342,7 +1398,7 @@ WalletFlow integrates with MetaMask through the Ethereum provider interface and 
 The integration is intentionally read-only. Its purpose is to retrieve wallet-related information and display the connection state without executing financial transactions.
 The term read-only describes the application's blockchain interaction scope; it does not mean that account access requires no permission. The connection workflow uses the provider's `eth_requestAccounts` method, which can prompt the user to approve account access. The application then retrieves selected wallet information without requesting transaction signatures or broadcasting transactions.
 
-## 7.2 Understanding Browser Wallets
+### 7.2 Understanding Browser Wallets
 
 A browser wallet is an application that provides an interface between a user and an Ethereum-compatible blockchain network.
 
@@ -1362,7 +1418,7 @@ The provider allows compatible applications to request information and interact 
 
 WalletFlow checks for an available provider before attempting wallet-related operations.
 
-## 7.3 Understanding EIP-1193
+### 7.3 Understanding EIP-1193
 
 EIP-1193 defines a standard interface for Ethereum wallet providers.
 
@@ -1391,7 +1447,7 @@ Examples include:
 
 These events allow the frontend to respond to changes without requiring the user to reload the page.
 
-## 7.4 ethers.js Integration
+### 7.4 ethers.js Integration
 
 WalletFlow uses ethers.js to simplify interaction with the Ethereum provider.
 
@@ -1424,7 +1480,7 @@ It helps the application access provider functionality using ethers.js conventio
 
 This reduces the need to handle every provider interaction manually.
 
-## 7.5 Wallet Connection Workflow
+### 7.5 Wallet Connection Workflow
 
 The wallet connection workflow begins when a user chooses to connect their wallet.
 
@@ -1446,12 +1502,13 @@ flowchart TD
     H --> I[Update wallet state]
     I --> J[Display connected state]
 ```
+**Figure 6. Read-only browser wallet connection workflow.**
 
 The user remains in control of granting account access through the wallet interface.
 
 A connection does not mean that the application receives permission to perform every possible wallet operation.
 
-## 7.6 Retrieving Wallet Information
+### 7.6 Retrieving Wallet Information
 
 After connection, WalletFlow can retrieve relevant wallet information.
 
@@ -1475,7 +1532,7 @@ Ethereum represents native currency balances in wei.
 
 This conversion is important because raw blockchain balance values are not generally suitable for direct display in a user interface.
 
-## 7.7 Account and Network Event Synchronization
+### 7.7 Account and Network Event Synchronization
 
 Wallet connections are dynamic.
 
@@ -2014,6 +2071,9 @@ flowchart TD
     F --> G["Hosted Application"]
     G --> H["Live Application Verification"]
 ```
+**Figure 7. WalletFlow source-to-production deployment workflow.**
+
+The diagram represents the development, GitHub version-control, Vercel deployment, and production verification stages.
 
 The workflow consists of several stages:
 
@@ -2231,6 +2291,9 @@ flowchart TD
     D --> C
     C --> F["Displayed Wallet Information"]
 ```
+**Figure 8. WalletFlow read-only wallet integration boundary.**
+
+The diagram illustrates the flow of publicly available wallet information between the application and the browser wallet provider.
 
 The application retrieves information such as:
 
@@ -2682,6 +2745,9 @@ flowchart TD
     B --> H["Browser Wallet Provider"]
     H --> I["Blockchain Network"]
 ```
+**Figure 9. Conceptual architecture for a potential future WalletFlow version.**
+
+This diagram represents a proposed frontend, backend, authentication, database, external-provider, and blockchain architecture. It is not part of the current implementation.
 
 The responsibilities could be divided as follows:
 
@@ -3062,7 +3128,13 @@ The project ultimately demonstrates an important principle:
 | Documentation | `docs/` |
 | Report Type | Engineering Technical Case Study |
 
-**End of Engineering Case Study**
+## Publication Note
+
+This document is an engineering case study describing the design, implementation, and evaluation of the WalletFlow project.
+
+It is intended for educational, technical, and portfolio-demonstration purposes. The descriptions of implemented functionality are based on the project code and documented verification activities. Proposed future features and conceptual architectures are identified separately from the current implementation.
+
+The project is independently developed and is not presented as a peer-reviewed scientific publication, security certification, or financial product evaluation.
 
 ## References and Technical Documentation
 
@@ -3079,3 +3151,6 @@ The following official documentation was consulted for the technologies and inte
 9. Vercel Documentation. https://vercel.com/docs
 
 These references provide technical background for the tools and interfaces discussed in this case study. They are not evidence of independent testing, certification, or endorsement of WalletFlow.
+---
+
+**End of Engineering Case Study**

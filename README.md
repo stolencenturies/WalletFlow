@@ -1,3 +1,4 @@
+
 # WalletFlow
 
 ### A modern Web3 portfolio dashboard built with React, TypeScript, and Vite.
@@ -86,6 +87,20 @@ WalletFlow is a responsive fintech-inspired cryptocurrency portfolio dashboard d
 
 ---
 
+## Documentation
+
+WalletFlow includes technical documentation covering its architecture, application data flows, engineering decisions, testing process, and developer setup.
+
+| Document | Description |
+|---|---|
+| [Architecture](docs/architecture.md) | Application structure, layers, and system architecture |
+| [Data Flow](docs/data-flow.md) | Portfolio, transaction, and wallet data flows |
+| [Technical Decisions](docs/technical-decisions.md) | Technology choices, trade-offs, and design decisions |
+| [Testing & Quality Assurance](docs/testing.md) | Verification commands and manual testing checklist |
+| [Developer Guide](docs/developer-guide.md) | Installation, development workflow, and contribution guidelines |
+
+---
+
 ## Getting Started
 
 ### Requirements
@@ -157,6 +172,12 @@ WalletFlow/
 │       ├── assets.png
 │       ├── transactions.png
 │       └── wallet-connection.png
+├── docs/
+│   ├── architecture.md
+│   ├── data-flow.md
+│   ├── technical-decisions.md
+│   ├── testing.md
+│   └── developer-guide.md
 ├── src/
 │   ├── App.tsx
 │   ├── App.css
